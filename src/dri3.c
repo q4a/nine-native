@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <unistd.h>
 
 #if D3DADAPTER9_WITHDRI2
 

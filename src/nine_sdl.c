@@ -37,16 +37,15 @@ static const char* debugstr_guid(const GUID* id)
     return "GUID";
 }
 
-static inline LONG InterlockedIncrement( LONG volatile *dest )
+static inline LONG WINAPI InterlockedIncrement( LONG volatile *dest )
 {
     return __sync_add_and_fetch(dest, 1);;
 }
-static inline LONG InterlockedDecrement( LONG volatile *dest )
+static inline LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 {
     return __sync_sub_and_fetch(dest, 1);;
 }
 
-void *get_device_vtable();
 
 // ---------------------------------------------------------------------------------------
 
@@ -133,7 +132,6 @@ struct D3DWindowBuffer
     PRESENTPixmapPriv *present_pixmap_priv;
 };
 
-/* DRI3Present_vtable are passed to nine which expects WINAPI functions */
 
 static ULONG WINAPI
 DRI3Present_AddRef( struct DRI3Present *This )
@@ -202,16 +200,9 @@ DRI3Present_SetPresentParameters( struct DRI3Present *This,
 
     }
     else {
-        SDL_DisplayMode* mode = NULL;
-        SDL_DisplayMode curr;
-        int err;
         if (!pFullscreenDisplayMode) {
-            if (SDL_GetCurrentDisplayMode(0, &curr) < 0) {
-                WARN("SDL_GetCurrentDisplayMode failed");
-               return D3DERR_INVALIDCALL;
-            }
-            mode = &curr;
-            goto current;
+            WARN("pFullscreenDisplayMode is NULL.\n");
+            return D3DERR_INVALIDCALL;
         }
 
         SDL_DisplayMode target;
@@ -232,6 +223,7 @@ DRI3Present_SetPresentParameters( struct DRI3Present *This,
         else
             target.format = ConvertToSDL(pFullscreenDisplayMode->Format);
 
+        SDL_DisplayMode* mode = NULL;
         if (FALSE) {
             /*
              * this doesn't seem to be a good idea:
@@ -246,12 +238,13 @@ DRI3Present_SetPresentParameters( struct DRI3Present *This,
         else {
             mode = &target;
         }
-current:
-        err = SDL_SetWindowDisplayMode(This->sdl_win, mode);
+
+        int err = SDL_SetWindowDisplayMode(This->sdl_win, mode);
         if (err < 0) {
             WARN("SDL_SetWindowDisplayMode returned an error: %s\n", SDL_GetError());
             return D3DERR_INVALIDCALL;
         }
+
         err = SDL_SetWindowFullscreen(This->sdl_win, SDL_WINDOW_FULLSCREEN);
         if (err < 0) {
             WARN("SDL_SetWindowFullscreen returned an error: %s\n", SDL_GetError());
@@ -557,8 +550,6 @@ struct DRI3PresentGroup
     unsigned npresent_backends;
 };
 
-/* DRI3PresentGroup_vtable functions are passed to nine and must be WINAPI */
-
 static ULONG WINAPI
 DRI3PresentGroup_AddRef( struct DRI3PresentGroup *This )
 {
@@ -707,7 +698,6 @@ struct d3dadapter9
 {
     /* COM vtable */
     void *vtable;
-    void *vtable_mirror; // for WINAPI
     /* IUnknown reference count */
     LONG refs;
 
@@ -722,7 +712,7 @@ struct d3dadapter9
 #define ADAPTER_PROC(name, ...) \
     ID3DAdapter9_##name(This->adapter, ## __VA_ARGS__)
 
-static HRESULT 
+static HRESULT WINAPI
 d3dadapter9_CheckDeviceFormat( struct d3dadapter9 *This,
                                UINT Adapter,
                                D3DDEVTYPE DeviceType,
@@ -731,9 +721,7 @@ d3dadapter9_CheckDeviceFormat( struct d3dadapter9 *This,
                                D3DRESOURCETYPE RType,
                                D3DFORMAT CheckFormat );
 
-/* d3dadapter9_vtable functions are passed to the app, not nine */
-
-static ULONG ALT_WINAPI
+static ULONG WINAPI
 d3dadapter9_AddRef( struct d3dadapter9 *This )
 {
     ULONG refs = InterlockedIncrement(&This->refs);
@@ -741,7 +729,7 @@ d3dadapter9_AddRef( struct d3dadapter9 *This )
     return refs;
 }
 
-static ULONG ALT_WINAPI
+static ULONG WINAPI
 d3dadapter9_Release( struct d3dadapter9 *This )
 {
     ULONG refs = InterlockedDecrement(&This->refs);
@@ -757,7 +745,7 @@ d3dadapter9_Release( struct d3dadapter9 *This )
     return refs;
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_QueryInterface( struct d3dadapter9 *This,
                             REFIID riid,
                             void **ppvObject )
@@ -777,7 +765,7 @@ d3dadapter9_QueryInterface( struct d3dadapter9 *This,
     return E_NOINTERFACE;
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_RegisterSoftwareDevice( struct d3dadapter9 *This,
                                     void *pInitializeFunction )
 {
@@ -785,13 +773,13 @@ d3dadapter9_RegisterSoftwareDevice( struct d3dadapter9 *This,
     return D3DERR_INVALIDCALL;
 }
 
-static UINT ALT_WINAPI
+static UINT WINAPI
 d3dadapter9_GetAdapterCount( struct d3dadapter9 *This )
 {
     return This ? 1 : 0;
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_GetAdapterIdentifier( struct d3dadapter9 *This,
                                   UINT Adapter,
                                   DWORD Flags,
@@ -805,7 +793,7 @@ d3dadapter9_GetAdapterIdentifier( struct d3dadapter9 *This,
     return hr;
 }
 
-static UINT ALT_WINAPI
+static UINT WINAPI
 d3dadapter9_GetAdapterModeCount( struct d3dadapter9 *This,
                                  UINT Adapter,
                                  D3DFORMAT Format )
@@ -839,7 +827,7 @@ d3dadapter9_GetAdapterModeCount( struct d3dadapter9 *This,
     return NumMatchingModes;
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_EnumAdapterModes( struct d3dadapter9 *This,
                               UINT Adapter,
                               D3DFORMAT Format,
@@ -895,7 +883,7 @@ d3dadapter9_EnumAdapterModes( struct d3dadapter9 *This,
     return D3DERR_INVALIDCALL;
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_GetAdapterDisplayMode( struct d3dadapter9 *This,
                                    UINT Adapter,
                                    D3DDISPLAYMODE *pMode )
@@ -920,7 +908,7 @@ d3dadapter9_GetAdapterDisplayMode( struct d3dadapter9 *This,
     return D3D_OK;
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_CheckDeviceType( struct d3dadapter9 *This,
                              UINT Adapter,
                              D3DDEVTYPE DevType,
@@ -933,7 +921,7 @@ d3dadapter9_CheckDeviceType( struct d3dadapter9 *This,
                         DevType, AdapterFormat, BackBufferFormat, bWindowed);
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_CheckDeviceFormat( struct d3dadapter9 *This,
                                UINT Adapter,
                                D3DDEVTYPE DeviceType,
@@ -947,7 +935,7 @@ d3dadapter9_CheckDeviceFormat( struct d3dadapter9 *This,
                         DeviceType, AdapterFormat, Usage, RType, CheckFormat);
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_CheckDeviceMultiSampleType( struct d3dadapter9 *This,
                                         UINT Adapter,
                                         D3DDEVTYPE DeviceType,
@@ -961,7 +949,7 @@ d3dadapter9_CheckDeviceMultiSampleType( struct d3dadapter9 *This,
                         Windowed, MultiSampleType, pQualityLevels);
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_CheckDepthStencilMatch( struct d3dadapter9 *This,
                                     UINT Adapter,
                                     D3DDEVTYPE DeviceType,
@@ -974,7 +962,7 @@ d3dadapter9_CheckDepthStencilMatch( struct d3dadapter9 *This,
                         RenderTargetFormat, DepthStencilFormat);
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_CheckDeviceFormatConversion( struct d3dadapter9 *This,
                                      UINT Adapter,
                                      D3DDEVTYPE DeviceType,
@@ -986,7 +974,7 @@ d3dadapter9_CheckDeviceFormatConversion( struct d3dadapter9 *This,
                         DeviceType, SourceFormat, TargetFormat);
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_GetDeviceCaps( struct d3dadapter9 *This,
                            UINT Adapter,
                            D3DDEVTYPE DeviceType,
@@ -1006,7 +994,7 @@ d3dadapter9_GetDeviceCaps( struct d3dadapter9 *This,
     return hr;
 }
 
-static HMONITOR ALT_WINAPI
+static HMONITOR WINAPI
 d3dadapter9_GetAdapterMonitor( struct d3dadapter9 *This,
                                UINT Adapter )
 {
@@ -1015,7 +1003,7 @@ d3dadapter9_GetAdapterMonitor( struct d3dadapter9 *This,
     return (HMONITOR)0;;
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_CreateDeviceEx( struct d3dadapter9 *This,
                             UINT Adapter,
                             D3DDEVTYPE DeviceType,
@@ -1023,28 +1011,28 @@ d3dadapter9_CreateDeviceEx( struct d3dadapter9 *This,
                             DWORD BehaviorFlags,
                             D3DPRESENT_PARAMETERS *pPresentationParameters,
                             D3DDISPLAYMODEEX *pFullscreenDisplayMode,
-                            IDirect3DDevice9Ex_alt **ppReturnedDeviceInterface );
+                            IDirect3DDevice9Ex **ppReturnedDeviceInterface );
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_CreateDevice( struct d3dadapter9 *This,
                           UINT Adapter,
                           D3DDEVTYPE DeviceType,
                           HWND hFocusWindow,
                           DWORD BehaviorFlags,
                           D3DPRESENT_PARAMETERS *pPresentationParameters,
-                          IDirect3DDevice9_alt **ppReturnedDeviceInterface )
+                          IDirect3DDevice9 **ppReturnedDeviceInterface )
 {
     HRESULT hr;
     hr = d3dadapter9_CreateDeviceEx(This, Adapter, DeviceType, hFocusWindow,
                                     BehaviorFlags, pPresentationParameters,
                                     NULL,
-                                    (IDirect3DDevice9Ex_alt **)ppReturnedDeviceInterface);
+                                    (IDirect3DDevice9Ex **)ppReturnedDeviceInterface);
     if (FAILED(hr))
         return hr;
     return D3D_OK;
 }
 
-static UINT ALT_WINAPI
+static UINT WINAPI
 d3dadapter9_GetAdapterModeCountEx( struct d3dadapter9 *This,
                                    UINT Adapter,
                                    const D3DDISPLAYMODEFILTER *pFilter )
@@ -1052,7 +1040,7 @@ d3dadapter9_GetAdapterModeCountEx( struct d3dadapter9 *This,
     return 1;
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_EnumAdapterModesEx( struct d3dadapter9 *This,
                                 UINT Adapter,
                                 const D3DDISPLAYMODEFILTER *pFilter,
@@ -1063,7 +1051,7 @@ d3dadapter9_EnumAdapterModesEx( struct d3dadapter9 *This,
     return D3DERR_INVALIDCALL;
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_GetAdapterDisplayModeEx( struct d3dadapter9 *This,
                                      UINT Adapter,
                                      D3DDISPLAYMODEEX *pMode,
@@ -1073,7 +1061,7 @@ d3dadapter9_GetAdapterDisplayModeEx( struct d3dadapter9 *This,
     return D3DERR_INVALIDCALL;
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_CreateDeviceEx( struct d3dadapter9 *This,
                             UINT Adapter,
                             D3DDEVTYPE DeviceType,
@@ -1081,7 +1069,7 @@ d3dadapter9_CreateDeviceEx( struct d3dadapter9 *This,
                             DWORD BehaviorFlags,
                             D3DPRESENT_PARAMETERS *pPresentationParameters,
                             D3DDISPLAYMODEEX *pFullscreenDisplayMode,
-                            IDirect3DDevice9Ex_alt **ppReturnedDeviceInterface )
+                            IDirect3DDevice9Ex **ppReturnedDeviceInterface )
 {
     ID3DPresentGroup *present;
     HRESULT hr;
@@ -1113,24 +1101,23 @@ d3dadapter9_CreateDeviceEx( struct d3dadapter9 *This,
         hr = ADAPTER_PROC(CreateDeviceEx, Adapter, DeviceType, hFocusWindow,
                           BehaviorFlags, pPresentationParameters,
                           pFullscreenDisplayMode,
-                          (IDirect3D9Ex *)&This->vtable_mirror, present,
-                          (IDirect3DDevice9Ex **)ppReturnedDeviceInterface);
+                          (IDirect3D9Ex *)This, present,
+                          ppReturnedDeviceInterface);
     } else { /* CreateDevice on non-ex */
         hr = ADAPTER_PROC(CreateDevice, Adapter, DeviceType, hFocusWindow,
                           BehaviorFlags, pPresentationParameters,
-                          (IDirect3D9 *)&This->vtable_mirror, present,
+                          (IDirect3D9 *)This, present,
                           (IDirect3DDevice9 **)ppReturnedDeviceInterface);
     }
     if (FAILED(hr)) {
         WARN("ADAPTER_PROC failed.\n");
         ID3DPresentGroup_Release(present);
     }
-    (*ppReturnedDeviceInterface)->lpVtbl = get_device_vtable();
 
     return hr;
 }
 
-static HRESULT ALT_WINAPI
+static HRESULT WINAPI
 d3dadapter9_GetAdapterLUID( struct d3dadapter9 *This,
                             UINT Adapter,
                             LUID *pLUID )
@@ -1139,7 +1126,7 @@ d3dadapter9_GetAdapterLUID( struct d3dadapter9 *This,
     return D3DERR_INVALIDCALL;
 }
 
-static IDirect3D9ExVtbl_alt d3dadapter9_vtable = {
+static IDirect3D9ExVtbl d3dadapter9_vtable = {
     (void *)d3dadapter9_QueryInterface,
     (void *)d3dadapter9_AddRef,
     (void *)d3dadapter9_Release,
@@ -1164,49 +1151,9 @@ static IDirect3D9ExVtbl_alt d3dadapter9_vtable = {
     (void *)d3dadapter9_GetAdapterLUID
 };
 
-static ULONG WINAPI
-d3dadapter9_AddRef_mirror_winapi( void **vtable_mirror )
-{
-    /* This points at vtable_mirror instead of vtable */
-    struct d3dadapter9 *d3d = (void*)(vtable_mirror-1);
-    return d3dadapter9_AddRef(d3d);
-}
-
-static ULONG WINAPI
-d3dadapter9_Release_mirror_winapi( void **vtable_mirror )
-{
-    struct d3dadapter9 *d3d = (void*)(vtable_mirror-1);
-    return d3dadapter9_Release(d3d);
-}
-
-static IDirect3D9ExVtbl d3dadapter9_vtable_mirror = {
-    (void *)NULL,
-    (void *)d3dadapter9_AddRef_mirror_winapi,
-    (void *)d3dadapter9_Release_mirror_winapi,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL,
-    (void *)NULL
-};
-
 HRESULT
 d3dadapter9_new( BOOL ex, Display *dpy,
-                 IDirect3D9Ex_alt **ppOut )
+                 IDirect3D9Ex **ppOut )
 {
     static void * WINAPI (*pD3DAdapter9GetProc)(const char *) = NULL;
     static BOOL StaticInitDone = FALSE;
@@ -1311,12 +1258,11 @@ d3dadapter9_new( BOOL ex, Display *dpy,
     }
 
     This->vtable = &d3dadapter9_vtable;
-    This->vtable_mirror = &d3dadapter9_vtable_mirror;
     This->refs = 1;
     This->ex = ex;
     This->adapter = adapter;
 
-    *ppOut = (IDirect3D9Ex_alt *)This;
+    *ppOut = (IDirect3D9Ex *)This;
     FIXME("\033[1;32m\nNative Direct3D 9 is active."
           "\nFor more information visit https://wiki.ixit.cz/d3d9\033[0m\n");
     return D3D_OK;
@@ -1325,21 +1271,7 @@ d3dadapter9_new( BOOL ex, Display *dpy,
 
 // --------------------------------------------------------------------
 
-static IDirect3D9Ex_alt* SDL_Direct3DCreate9Ex_common(BOOL ex, unsigned version )
-{
-    SDL_SysWMinfo info;
-    SDL_VERSION(&info.version);
-    Display *dpy = XOpenDisplay(NULL);
-    IDirect3D9Ex_alt *pD3D9Ex = NULL;
-    HRESULT hr = d3dadapter9_new( ex, dpy, &pD3D9Ex );
-    if (FAILED(hr)) {
-        return NULL;
-    }
-
-    return pD3D9Ex;
-}
-
-static IDirect3D9Ex_alt* SDL_Direct3DCreate9Ex_commonex(BOOL ex, SDL_Window *win )
+static IDirect3D9Ex* SDL_Direct3DCreate9Ex_common(BOOL ex, SDL_Window *win )
 {
     SDL_SysWMinfo info;
     SDL_VERSION(&info.version);
@@ -1349,7 +1281,7 @@ static IDirect3D9Ex_alt* SDL_Direct3DCreate9Ex_commonex(BOOL ex, SDL_Window *win
         return NULL;
     }
 
-    IDirect3D9Ex_alt *pD3D9Ex = NULL;
+    IDirect3D9Ex *pD3D9Ex = NULL;
     HRESULT hr = d3dadapter9_new( ex, info.info.x11.display, &pD3D9Ex );
     if (FAILED(hr)) {
         return NULL;
@@ -1358,21 +1290,14 @@ static IDirect3D9Ex_alt* SDL_Direct3DCreate9Ex_commonex(BOOL ex, SDL_Window *win
     return pD3D9Ex;
 }
 
-IDirect3D9Ex_alt* SDL_Direct3DCreate9Ex(SDL_Window *win)
+IDirect3D9Ex* SDL_Direct3DCreate9Ex(SDL_Window *win)
 {
-    return SDL_Direct3DCreate9Ex_commonex(TRUE, win);
+    return SDL_Direct3DCreate9Ex_common(TRUE, win);
 }
 
 
-
-IDirect3D9Ex_alt* Direct3DCreate9Ex(unsigned version)
+IDirect3D9* SDL_Direct3DCreate9(SDL_Window *win)
 {
-    return SDL_Direct3DCreate9Ex_common(TRUE, version);
-}
-
-
-IDirect3D9* Direct3DCreate9(unsigned version)
-{
-    return (IDirect3D9*)SDL_Direct3DCreate9Ex_common(FALSE, version);
+    return (IDirect3D9*)SDL_Direct3DCreate9Ex_common(FALSE, win);
 }
 
