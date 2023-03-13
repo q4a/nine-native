@@ -1,7 +1,7 @@
 // ----------------------------------------
 // SDL_nine
 
-#include "nine_sdl.h"
+#include <d3d9.h>
 
 #include <dlfcn.h>
 #include <malloc.h>
