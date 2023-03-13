@@ -1,0 +1,5 @@
+*.log
+*.user
+.vs
+build
+cmake-build-*
