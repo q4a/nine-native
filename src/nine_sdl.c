@@ -211,42 +211,42 @@ DRI3Present_SetPresentParameters( struct DRI3Present *This,
                return D3DERR_INVALIDCALL;
             }
             mode = &curr;
-            goto current;
-        }
-
-        SDL_DisplayMode target;
-        SDL_DisplayMode closest;
-        memset(&target, 0, sizeof(target));
-        memset(&closest, 0, sizeof(closest));
-
-        // msdn: "When switching to full-screen mode,
-        //  Direct3D will try to find a desktop format that matches the back buffer format,
-        //  so that back buffer and front buffer formats will be identical (to eliminate the need for color conversion)."
-        Uint32 preferred_format_for_backbuffer = ConvertToSDL(pPresentationParameters->BackBufferFormat);
-
-        target.w = pFullscreenDisplayMode->Height;
-        target.h = pFullscreenDisplayMode->Width;
-        target.refresh_rate = pFullscreenDisplayMode->RefreshRate;
-        if (preferred_format_for_backbuffer != SDL_PIXELFORMAT_UNKNOWN)
-            target.format = preferred_format_for_backbuffer;
-        else
-            target.format = ConvertToSDL(pFullscreenDisplayMode->Format);
-
-        if (FALSE) {
-            /*
-             * this doesn't seem to be a good idea:
-             *       it returns different mode even when the request mode exits and works...
-             */
-            int Adapter = 0;
-            mode = SDL_GetClosestDisplayMode(Adapter, &target, &closest);
-            if (!mode) {
-                WARN("Could not find requested fullscreen display mode (%dx%d %dHz, format = %d).\n", pFullscreenDisplayMode->Width, pFullscreenDisplayMode->Height, pFullscreenDisplayMode->RefreshRate, pFullscreenDisplayMode->Format);
-            }
         }
         else {
-            mode = &target;
+            SDL_DisplayMode target;
+            SDL_DisplayMode closest;
+            memset(&target, 0, sizeof(target));
+            memset(&closest, 0, sizeof(closest));
+
+            // msdn: "When switching to full-screen mode,
+            //  Direct3D will try to find a desktop format that matches the back buffer format,
+            //  so that back buffer and front buffer formats will be identical (to eliminate the need for color conversion)."
+            Uint32 preferred_format_for_backbuffer = ConvertToSDL(pPresentationParameters->BackBufferFormat);
+
+            target.w = pFullscreenDisplayMode->Height;
+            target.h = pFullscreenDisplayMode->Width;
+            target.refresh_rate = pFullscreenDisplayMode->RefreshRate;
+            if (preferred_format_for_backbuffer != SDL_PIXELFORMAT_UNKNOWN)
+                target.format = preferred_format_for_backbuffer;
+            else
+                target.format = ConvertToSDL(pFullscreenDisplayMode->Format);
+
+            if (FALSE) {
+                /*
+                 * this doesn't seem to be a good idea:
+                 *       it returns different mode even when the request mode exits and works...
+                 */
+                int Adapter = 0;
+                mode = SDL_GetClosestDisplayMode(Adapter, &target, &closest);
+                if (!mode) {
+                    WARN("Could not find requested fullscreen display mode (%dx%d %dHz, format = %d).\n", pFullscreenDisplayMode->Width, pFullscreenDisplayMode->Height, pFullscreenDisplayMode->RefreshRate, pFullscreenDisplayMode->Format);
+                }
+            }
+            else {
+                mode = &target;
+            }
         }
-current:
+
         err = SDL_SetWindowDisplayMode(This->sdl_win, mode);
         if (err < 0) {
             WARN("SDL_SetWindowDisplayMode returned an error: %s\n", SDL_GetError());
