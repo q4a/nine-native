@@ -1,7 +1,7 @@
 // ----------------------------------------
 // SDL_nine
 
-#include "SDL_nine.h"
+#include "nine_sdl.h"
 
 #include <dlfcn.h>
 #include <malloc.h>
@@ -17,8 +17,8 @@
 
 #include <d3dadapter/drm.h>
 
-#include <SDL.h>
-#include <SDL_syswm.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
 
 #include "dri3.h"
 
