@@ -1285,18 +1285,15 @@ d3dadapter9_new( BOOL ex, Display *dpy,
 
 // --------------------------------------------------------------------
 
-static IDirect3D9Ex* SDL_Direct3DCreate9Ex_common(BOOL ex, unsigned version )
+static HRESULT SDL_Direct3DCreate9Ex_common(BOOL ex, UINT SDKVersion,
+                                            IDirect3D9Ex **ppD3D9Ex )
 {
     SDL_SysWMinfo info;
     SDL_VERSION(&info.version);
     Display *dpy = XOpenDisplay(NULL);
-    IDirect3D9Ex *pD3D9Ex = NULL;
-    HRESULT hr = d3dadapter9_new( ex, dpy, &pD3D9Ex );
-    if (FAILED(hr)) {
-        return NULL;
-    }
+    HRESULT hr = d3dadapter9_new( ex, dpy, ppD3D9Ex );
 
-    return pD3D9Ex;
+    return hr;
 }
 
 static IDirect3D9Ex* SDL_Direct3DCreate9Ex_commonex(BOOL ex, SDL_Window *win )
@@ -1323,13 +1320,19 @@ IDirect3D9Ex* SDL_Direct3DCreate9Ex(SDL_Window *win)
     return SDL_Direct3DCreate9Ex_commonex(TRUE, win);
 }
 
-IDirect3D9Ex* Direct3DCreate9Ex(unsigned version)
+HRESULT Direct3DCreate9Ex(UINT SDKVersion, IDirect3D9Ex **ppD3D9 )
 {
-    return SDL_Direct3DCreate9Ex_common(TRUE, version);
+    return SDL_Direct3DCreate9Ex_common(TRUE, SDKVersion, ppD3D9);
 }
 
-IDirect3D9* Direct3DCreate9(unsigned version)
+IDirect3D9* Direct3DCreate9(UINT SDKVersion)
 {
-    return (IDirect3D9*)SDL_Direct3DCreate9Ex_common(FALSE, version);
+    IDirect3D9Ex *pD3D9Ex = NULL;
+    HRESULT hr = SDL_Direct3DCreate9Ex_common(FALSE, SDKVersion, &pD3D9Ex);
+    if (FAILED(hr)) {
+        return NULL;
+    }
+
+    return (IDirect3D9*)pD3D9Ex;
 }
 
