@@ -1272,8 +1272,7 @@ d3dadapter9_new( BOOL ex, Display *dpy,
     This->adapter = adapter;
 
     *ppOut = (IDirect3D9Ex *)This;
-    FIXME("\033[1;32m\nNative Direct3D 9 is active."
-          "\nFor more information visit https://wiki.ixit.cz/d3d9\033[0m\n");
+    FIXME("\033[1;32m\nNative Direct3D 9 is active.\033[0m\n");
     return D3D_OK;
 }
 
