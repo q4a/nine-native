@@ -140,6 +140,14 @@
 #define D3DUSAGE_TEXTAPI                         0x10000000
 #endif
 
+#define D3DWRAP_U        1
+#define D3DWRAP_V        2
+#define D3DWRAP_W        4
+#define D3DWRAPCOORD_0   1
+#define D3DWRAPCOORD_1   2
+#define D3DWRAPCOORD_2   4
+#define D3DWRAPCOORD_3   8
+
 /* Buffer locking */
 /* http://msdn.microsoft.com/en-us/library/ee416503(VS.85).aspx */
 #define D3DLOCK_READONLY        0x00000010
