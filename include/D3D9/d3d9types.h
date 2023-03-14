@@ -60,6 +60,10 @@
 /* Adapter */
 #define D3DADAPTER_DEFAULT 0
 
+/* IDirect3DDevice9::SetGammaRamp flags */
+#define D3DSGR_NO_CALIBRATION            0x00000000
+#define D3DSGR_CALIBRATE                 0x00000001
+
 /********************************************************
  * Return codes                                         *
  ********************************************************/
@@ -179,6 +183,10 @@
 #define D3DFVF_TEXTUREFORMAT2   0x00000000
 #define D3DFVF_TEXTUREFORMAT3   0x00000001
 #define D3DFVF_TEXTUREFORMAT4   0x00000002
+#define D3DFVF_TEXCOORDSIZE1(CoordIndex) (D3DFVF_TEXTUREFORMAT1 << (CoordIndex*2 + 16))
+#define D3DFVF_TEXCOORDSIZE2(CoordIndex) (D3DFVF_TEXTUREFORMAT2)
+#define D3DFVF_TEXCOORDSIZE3(CoordIndex) (D3DFVF_TEXTUREFORMAT3 << (CoordIndex*2 + 16))
+#define D3DFVF_TEXCOORDSIZE4(CoordIndex) (D3DFVF_TEXTUREFORMAT4 << (CoordIndex*2 + 16))
 
 #define D3DFVF_POSITION_MASK  0x0000400E
 #define D3DFVF_TEXCOUNT_MASK  0x00000F00
