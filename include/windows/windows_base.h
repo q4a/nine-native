@@ -259,7 +259,16 @@ typedef struct RGNDATA {
 #define DXGI_ERROR_NAME_ALREADY_EXISTS           ((HRESULT)0x887A002C)
 #define DXGI_ERROR_SDK_COMPONENT_MISSING         ((HRESULT)0x887A002D)
 
+/* Windows calling convention */
+#ifndef WINAPI
+#if defined(__x86_64__) && !defined(__ILP32__)
+#define WINAPI __attribute__((ms_abi))
+#elif defined(__i386__)
+#define WINAPI __attribute__((__stdcall__))
+#else /* neither amd64 nor i386 */
 #define WINAPI
+#endif
+#endif /* WINAPI */
 #define WINUSERAPI
 
 #define RGB(r,g,b)          ((COLORREF)(((BYTE)(r)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(b))<<16)))

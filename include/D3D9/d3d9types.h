@@ -46,17 +46,6 @@
 #define D3DPRESENTFLAG_RESTRICTED_CONTENT              0x00000400
 #define D3DPRESENTFLAG_RESTRICT_SHARED_RESOURCE_DRIVER 0x00000800
 
-/* Windows calling convention */
-#ifndef WINAPI
-  #if defined(__x86_64__) && !defined(__ILP32__)
-    #define WINAPI __attribute__((ms_abi))
-  #elif defined(__i386__)
-    #define WINAPI __attribute__((__stdcall__))
-  #else /* neither amd64 nor i386 */
-    #define WINAPI
-  #endif
-#endif /* WINAPI */
-
 /* Implementation caps */
 #define D3DPRESENT_BACK_BUFFERS_MAX    3
 #define D3DPRESENT_BACK_BUFFERS_MAX_EX 30
