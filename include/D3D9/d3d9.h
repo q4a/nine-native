@@ -25,6 +25,7 @@
 #ifndef _D3D9_H_
 #define _D3D9_H_
 
+#include <windows.h>
 #include "d3d9types.h"
 #include "d3d9caps.h"
 #include "nine_sdl.h"
