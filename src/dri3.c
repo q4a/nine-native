@@ -615,7 +615,7 @@ static void PRESENThandle_events(PRESENTpriv *present_priv, xcb_present_generic_
 
     switch (ge->evtype) {
         case XCB_PRESENT_COMPLETE_NOTIFY: {
-            xcb_present_complete_notify_event_t *ce = (void *) ge;
+            xcb_present_complete_notify_event_t *ce = (xcb_present_complete_notify_event_t *) ge;
             if (ce->kind == XCB_PRESENT_COMPLETE_KIND_NOTIFY_MSC) {
                 if (ce->serial)
                     present_priv->notify_with_serial_pending = FALSE;
@@ -642,7 +642,7 @@ static void PRESENThandle_events(PRESENTpriv *present_priv, xcb_present_generic_
             break;
         }
         case XCB_PRESENT_EVENT_IDLE_NOTIFY: {
-            xcb_present_idle_notify_event_t *ie = (void *) ge;
+            xcb_present_idle_notify_event_t *ie = (xcb_present_idle_notify_event_t *) ge;
             present_pixmap_priv = PRESENTFindPixmapPriv(present_priv, ie->serial);
             if (!present_pixmap_priv || present_pixmap_priv->pixmap != ie->pixmap) {
                 ERR("FATAL ERROR: PRESENT handling failed\n");
@@ -665,7 +665,7 @@ static void PRESENTflush_events(PRESENTpriv *present_priv, BOOL assert_no_other_
         return;
 
     while ((ev = xcb_poll_for_special_event(present_priv->xcb_connection, present_priv->special_event)) != NULL) {
-        PRESENThandle_events(present_priv, (void *) ev);
+        PRESENThandle_events(present_priv, (xcb_present_generic_event_t *) ev);
     }
 }
 
@@ -689,7 +689,7 @@ static BOOL PRESENTwait_events(PRESENTpriv *present_priv, BOOL allow_other_threa
         return FALSE;
     }
 
-    PRESENThandle_events(present_priv, (void *) ev);
+    PRESENThandle_events(present_priv, (xcb_present_generic_event_t *) ev);
     return TRUE;
 }
 
@@ -1240,7 +1240,7 @@ PRESENTPixmap(Display *dpy, XID window,
         update = xcb_generate_id(present_priv->xcb_connection_bis);
         xcb_xfixes_create_region(present_priv->xcb_connection_bis, valid, 1, &rect_update);
         if (pDirtyRegion && pDirtyRegion->rdh.nCount) {
-            rect_updates = (void *) calloc(pDirtyRegion->rdh.nCount, sizeof(xcb_rectangle_t));
+            rect_updates = (xcb_rectangle_t *) calloc(pDirtyRegion->rdh.nCount, sizeof(xcb_rectangle_t));
             for (i = 0; i < pDirtyRegion->rdh.nCount; i++)
             {
                 RECT rc;
