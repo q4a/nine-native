@@ -2008,6 +2008,21 @@ D3DPERF_SetRegion( D3DCOLOR color,
 void WINAPI
 DebugSetMute( void );
 
+#else
+
+inline int WINAPI
+D3DPERF_BeginEvent( D3DCOLOR color,
+                    LPCWSTR name )
+{
+	return 0;
+};
+
+inline int WINAPI
+D3DPERF_EndEvent( void )
+{
+	return 0;
+};
+
 #endif
 
 #endif /* _D3D9_H_ */
