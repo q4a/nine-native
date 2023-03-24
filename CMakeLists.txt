@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 project(nine-native)
 
+if (NINE_POSITION_INDEPENDENT)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
 add_library(${PROJECT_NAME} STATIC
     include/nine_sdl.h
     src/nine_sdl.c
